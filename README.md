@@ -6,7 +6,7 @@ Everything runs in your browser: no install, no account, and nothing is uploaded
 
 ## Using it
 
-1. Open `daily-planner-generator.html` in any modern browser, either straight from disk or from any static web host.
+1. Open the live version at https://cosmo-nz.github.io/Daily_Planner/, or download `index.html` and open it in any modern browser, either straight from disk or from any static web host.
 2. Choose your settings. The preview on the right updates as you go.
 3. Click **Generate PDF**. A full year takes a few seconds, and the PDF downloads when it's done.
 4. Copy the PDF to your tablet and open it in a reader that supports internal links.
