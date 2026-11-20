@@ -20,6 +20,7 @@ Everything runs in your browser: no install, no account, and nothing is uploaded
 | Week start | Monday or Sunday |
 | Handedness | Right or left (left mirrors the navigation to the other side) |
 | Planner font | PT Sans (default), Inter, Atkinson Hyperlegible, Bitter, PT Serif |
+| Page shape | 3:4 (default), A4 shape or 16:10, to suit your device (see below) |
 | Schedule from / to | 06:00 to 20:00 in 30-minute steps (default 08:30 to 17:00) |
 | Interval | 30 or 60 minutes per schedule row |
 | Daily notes pages | 1, 2 or 3 per day |
@@ -32,7 +33,17 @@ Everything runs in your browser: no install, no account, and nothing is uploaded
 - **Daily Plan page** for every day: tasks with checkboxes, a reminders box, and a timed schedule.
 - **Daily Notes pages** (1 to 3 per day): lined pages for writing.
 
-Pages are 540 × 720 pt (7.5 × 10 in, a 3:4 ratio) to match tablet screens. They aren't sized for printing on paper.
+### Page shape
+
+Choose the shape that matches your screen so the page fills it without blank bands. All three are 540 pt (7.5 in) wide; taller shapes give you more writing space rather than a different layout.
+
+| Shape | Page size | Best for |
+|---|---|---|
+| 3:4 | 540 × 720 pt (7.5 × 10 in) | E-ink tablets (Boox, reMarkable, Kindle Scribe, Kobo, Supernote) and 13″ iPads |
+| A4 shape (0.71) | 540 × 764 pt (7.5 × 10.61 in) | 11″ iPads, iPad mini, Surface Pro, and printing on A4 |
+| 16:10 | 540 × 864 pt (7.5 × 12 in) | Samsung Galaxy Tab and other Android tablets |
+
+The 3:4 shape also prints well on US Letter paper.
 
 ### Navigation
 

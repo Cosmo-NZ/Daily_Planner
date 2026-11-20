@@ -80,6 +80,7 @@
     color: var(--text-muted);
     margin-bottom: 5px;
   }
+  .field-hint { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; margin-top: 6px; }
   .field input[type="text"], .field select {
     width: 100%;
     font-family: inherit;
@@ -226,6 +227,11 @@
         <label for="fontChoice">Planner Font</label>
         <select id="fontChoice"></select>
       </div>
+      <div class="field">
+        <label for="pageShape">Page Shape</label>
+        <select id="pageShape"></select>
+        <p class="field-hint" id="pageShapeHint"></p>
+      </div>
     </div>
 
     <div class="card">
@@ -276,7 +282,6 @@
         Every page is hyperlinked: month tabs open a calendar page for that month where every date links to its day,
         the week strip jumps between days, the arrows step a week (or a month on calendar pages), and each Daily Plan
         page links to its Daily Notes pages and back.
-        Sized 540&times;720&nbsp;pt (3:4) &mdash; ideal for Boox and similar e-ink tablets.
       </div>
     </div>
 
@@ -309,8 +314,25 @@ const MONTHS_ABBR = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT'
 const DAYS_FULL = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
 const DAYS_ABBR = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
 
-const PW = 540, PH = 720, M = 36;           // page + margin (pt)
+const PW = 540, M = 36;                     // page width + margin (pt)
+let PH = 720;                               // page height (pt); set per build from the chosen page shape
 const CL = M, CR = PW - M, CW = CR - CL;    // content box
+
+// Page shapes share the 540 pt width and differ only in height, so the header and columns
+// keep their layout and the extra height goes to writing space.
+const PAGE_SHAPES = {
+  '3x4':   { short: '3:4',      height: 720,
+             option: '3:4 — e-ink tablets and 13″ iPads',
+             desc: 'For e-ink tablets (Boox, reMarkable, Kindle Scribe, Kobo, Supernote) and 13″ iPads.' },
+  'a4':    { short: 'A4 shape', height: 540 * Math.SQRT2,
+             option: 'A4 shape (0.71) — 11″ iPads, iPad mini, printing',
+             desc: 'For 11″ iPads, iPad mini, Surface Pro, and printing on A4.' },
+  '16x10': { short: '16:10',    height: 864,
+             option: '16:10 — Samsung and other Android tablets',
+             desc: 'For Samsung Galaxy Tab and other Android tablets.' }
+};
+const DEFAULT_SHAPE = '3x4';
+const ptToIn = pt => String(+(pt / 72).toFixed(2));   // 540 → "7.5", 720 → "10", 763.7 → "10.61"
 
 /* ============================== form helpers ============================== */
 function fmtMins(m) {
@@ -391,8 +413,26 @@ const DEFAULT_FONT = 'ptsans';
   });
 })();
 
+(function fillShapeSelect() {
+  const sel = document.getElementById('pageShape');
+  Object.entries(PAGE_SHAPES).forEach(([key, s]) => {
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = s.option;
+    if (key === DEFAULT_SHAPE) opt.selected = true;
+    sel.appendChild(opt);
+  });
+})();
+
+function updateShapeHint() {
+  const s = PAGE_SHAPES[document.getElementById('pageShape').value] || PAGE_SHAPES[DEFAULT_SHAPE];
+  document.getElementById('pageShapeHint').textContent =
+    s.desc + ' Pages are ' + PW + ' × ' + Math.round(s.height) + ' pt (' + ptToIn(PW) + ' × ' + ptToIn(s.height) + ' in).';
+}
+
 function readOptions() {
   return {
+    pageShape: PAGE_SHAPES[document.getElementById('pageShape').value] ? document.getElementById('pageShape').value : DEFAULT_SHAPE,
     name: document.getElementById('docName').value.trim() || 'Daily Planner',
     year: parseInt(document.getElementById('calYear').value, 10),
     weekStart: parseInt(document.getElementById('weekStart').value, 10), // 1 = Mon, 0 = Sun
@@ -499,7 +539,7 @@ function drawMonthPage(doc, ctx) {
   capsText(doc, MONTHS[month] + ' ' + o.year, LH ? CR : CL, 60, 14.5, { charSpace: 1.8, align: LH ? 'right' : 'left' });
 
   // weekday header, honouring the Monday/Sunday start
-  const gap = 4, cellW = (CW - 6 * gap) / 7, cellH = 58;
+  const gap = 4, cellW = (CW - 6 * gap) / 7, cellH = 58 * PH / 720;   // taller shapes get taller boxes
   const headY = 96, gridTop = 104;
   for (let c = 0; c < 7; c++) {
     capsText(doc, DAYS_ABBR[(o.weekStart + c) % 7], CL + c * (cellW + gap) + cellW / 2, headY, 6.5,
@@ -669,15 +709,16 @@ function drawNotesBody(doc) {
 function drawCover(doc, o, monthPage) {
   doc.setFillColor(COVER_BG);
   doc.rect(0, 0, PW, PH, 'F');
-  capsText(doc, o.name.toUpperCase(), PW / 2, 240, 30, { charSpace: 4, align: 'center' });
+  const dy = (PH - 720) / 2;   // keep the layout vertically centred on taller page shapes
+  capsText(doc, o.name.toUpperCase(), PW / 2, 240 + dy, 30, { charSpace: 4, align: 'center' });
   doc.setDrawColor('#9fbedd'); doc.setLineWidth(2.5);
-  doc.line(PW / 2 - 26, 258, PW / 2 + 26, 258);
-  capsText(doc, o.year + ' DAILY PLANNER', PW / 2, 284, 11, { color: TEXT_MUTED, charSpace: 2.4, align: 'center' });
+  doc.line(PW / 2 - 26, 258 + dy, PW / 2 + 26, 258 + dy);
+  capsText(doc, o.year + ' DAILY PLANNER', PW / 2, 284 + dy, 11, { color: TEXT_MUTED, charSpace: 2.4, align: 'center' });
 
   // month grid 4 x 3
   const bw = 92, bh = 46, gx = 14, gy = 16;
   const gridW = 4 * bw + 3 * gx;
-  const x0 = (PW - gridW) / 2, y0 = 392;
+  const x0 = (PW - gridW) / 2, y0 = 392 + dy;
   for (let i = 0; i < 12; i++) {
     const x = x0 + (i % 4) * (bw + gx);
     const y = y0 + Math.floor(i / 4) * (bh + gy);
@@ -732,6 +773,7 @@ function buildPdf(o, onProgress) {
   return new Promise((resolve, reject) => {
     try {
       const { jsPDF } = window.jspdf;
+      PH = (PAGE_SHAPES[o.pageShape] || PAGE_SHAPES[DEFAULT_SHAPE]).height;
       const doc = new jsPDF({ unit: 'pt', format: [PW, PH], compress: true });
 
       // Embed the chosen font and use it for every label; fall back to Helvetica on any failure.
@@ -836,6 +878,11 @@ function renderPreview() {
   const o = readOptions();
   const pv = document.getElementById('pvPage');
   pv.style.fontFamily = (PDF_FONTS[o.font] || PDF_FONTS[DEFAULT_FONT]).stack;  // WYSIWYG with chosen font
+  // Match the chosen page shape: the preview is 318 px wide, and extra height goes to the body.
+  const shape = PAGE_SHAPES[o.pageShape];
+  const pvH = 318 * shape.height / PW, extra = pvH - 424;
+  pv.style.height = pvH.toFixed(1) + 'px';
+  updateShapeHint();
   const sample = new Date(o.year, 0, 1);
   const ws = startOfWeek(sample, o.weekStart);
 
@@ -862,24 +909,26 @@ function renderPreview() {
                   : cells + toggle) + '</div>';
 
   let tasks = '<div class="pv-col"><h4>TASKS</h4>';
-  for (let i = 0; i < 14; i++) tasks += '<div class="pv-task"><i></i></div>';
+  const taskRows = 14 + Math.floor(extra / 12.2);   // taller pages fit more task lines, as in the PDF
+  for (let i = 0; i < taskRows; i++) tasks += '<div class="pv-task"><i></i></div>';
   tasks += '<div class="pv-rem"><h4>REMINDERS</h4><div></div></div></div>';
 
   const slots = Math.max(1, Math.round((o.schedEnd - o.schedStart) / o.interval));
   let sched = '<div class="pv-col"><h4>SCHEDULE</h4>';
   const shown = Math.min(slots, 16);
-  const slotPx = Math.max(10, 272 / shown);
+  const slotPx = Math.max(10, (272 + extra) / shown);
   for (let i = 0; i < shown; i++) {
     const mins = o.schedStart + i * o.interval;
     sched += '<div class="pv-slot" style="height:' + slotPx.toFixed(1) + 'px">' + fmtMins(mins) + '</div>';
   }
   sched += '</div>';
 
-  const body = '<div class="pv-body">' + (o.leftHanded ? sched + tasks : tasks + sched) + '</div>';
+  const body = '<div class="pv-body" style="height:' + (300 + extra).toFixed(1) + 'px">' +
+    (o.leftHanded ? sched + tasks : tasks + sched) + '</div>';
   pv.innerHTML = months + titleRow + weekRow + body;
 
   document.getElementById('pvCaption').textContent =
-    'Daily Plan · ' + (o.leftHanded ? 'Left' : 'Right') + ' handed · ' +
+    'Daily Plan · ' + shape.short + ' · ' + (o.leftHanded ? 'Left' : 'Right') + ' handed · ' +
     (o.weekStart === 1 ? 'Monday' : 'Sunday') + ' start · ' + o.year;
   updateEstimate();
 }
