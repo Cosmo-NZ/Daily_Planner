@@ -61,6 +61,10 @@ The page works without an internet connection:
 - **Fonts** are built into the file (latin character set only).
 - **PDF engine:** the page loads jsPDF 4.2.1 from jsDelivr and falls back to an identical copy built into the file if it can't reach the internet.
 
+## Licence
+
+The planner's own code is released under the [MIT licence](LICENSE). The jsPDF library and fonts built into `index.html` keep their own licences, listed below.
+
 ## Credits
 
 - [jsPDF](https://github.com/parallax/jsPDF) (MIT licence)
